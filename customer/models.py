@@ -4,7 +4,7 @@ from django.db import models
 
 class Client(models.Model):
     name = models.CharField(max_length=100)
-    taxId = models.CharField(max_length=10)
+    indentification = models.CharField(max_length=10)
     address = models.TextField(null=True, blank=True)
     phone = models.CharField(max_length=10, null=True, blank=True)
     email = models.EmailField(max_length=100, null=True, blank=True)
