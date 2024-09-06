@@ -15,6 +15,11 @@ class Client(models.Model):
 
     def __str__(self):  #para que aparezca el nombre en el admin
         return self.name
+    def save(self, *args, **kwargs):
+        if self.password and not self.password.startswith('pbkdf2_sha256$'):
+            self.password = make_password(self.password)
+        super(Client, self).save(*args, **kwargs)
+
 
 
 

@@ -5,7 +5,6 @@ from django.contrib.auth.models import Group
 
 from django_filters.rest_framework import DjangoFilterBackend
 
-from pyback.permissions import GroupPermission
 from .models import *
 from rest_framework import permissions, viewsets, filters
 
@@ -56,7 +55,7 @@ class ClientViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
     #PARA LEVANTAR AUTENTICACIÓNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
-    permission_classes = [GroupPermission]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['email']
     search_fields = ['name']
