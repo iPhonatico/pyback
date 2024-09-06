@@ -54,6 +54,7 @@ class ClientViewSet(viewsets.ModelViewSet):
     """
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
+    #PARA LEVANTAR AUTENTICACIÓNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['email']
@@ -67,4 +68,9 @@ class VehicleViewSet(viewsets.ModelViewSet):
     """
     queryset = Vehicle.objects.all()
     serializer_class = VehicleSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['color']
+    filterset_fields = ['plate']
+
+
 

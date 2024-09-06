@@ -26,8 +26,9 @@ class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['state',"vehicle__plate"]
+    filterset_fields = ['state']
     search_fields = ['vehicle__plate']
+
     # permission_classes =
 
     # def get_queryset(self):
@@ -37,8 +38,5 @@ class ReservationViewSet(viewsets.ModelViewSet):
     #
     #     queryset = Reservation.objects.all()
     #     return queryset
-    # def perform_create(self, serializer):
-    #
-    #
-    #     serializer.save()
+
 

@@ -4,8 +4,13 @@ from django.shortcuts import render
 from django.contrib.auth.models import Group
 from .models import Parking
 from rest_framework import permissions, viewsets
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import permissions, viewsets, filters
 
 from .serializers import *
+
+
+
 
 
 class ParkingViewSet(viewsets.ModelViewSet):
@@ -15,4 +20,6 @@ class ParkingViewSet(viewsets.ModelViewSet):
     queryset = Parking.objects.all()
     serializer_class = ParkingSerializer
     #permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
 
