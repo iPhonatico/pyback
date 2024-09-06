@@ -29,12 +29,10 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def update(self, instance, validated_data):
-        # if 'password' in validated_data:
-        #     validated_data['password'] = make_password(validated_data['password'])
+
 
         # Asumiendo que hay una lógica específica para manejar el campo 'status'
         status_data = validated_data.pop('status', None)
-
         instance = super(ClientSerializer, self).update(instance, validated_data)
 
         # Procesar el campo 'status' si es necesario
@@ -44,8 +42,5 @@ class ClientSerializer(serializers.ModelSerializer):
 
         return instance
 
-    # def create(self, validated_data):
-    #     validated_data['password'] = make_password(validated_data['password'])
-    #     return super(ClientSerializer, self).create(validated_data)
 
 

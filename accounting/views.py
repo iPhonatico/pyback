@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.contrib.auth.models import Group
 from rest_framework.exceptions import PermissionDenied
 
+from pyback.permissions import GroupPermission
 from .models import *
 from rest_framework import permissions, viewsets
 
@@ -29,7 +30,8 @@ class ReservationViewSet(viewsets.ModelViewSet):
     filterset_fields = ['state']
     search_fields = ['vehicle__plate']
 
-    # permission_classes =
+    permission_classes = [GroupPermission]
+
 
     # def get_queryset(self):
     #     user =  self.request.user
