@@ -90,10 +90,6 @@ class AutomaticReservationSerializer(serializers.ModelSerializer):
         # Buscar el vehículo por la placa. Si no existe, crearlo
         vehicle, created = Vehicle.objects.get_or_create(plate=plate, defaults={'color': data.get('color')})
 
-        # Verificar si el parqueo tiene capacidad
-        if parking.actualCapacity <= 0:
-            raise serializers.ValidationError("No hay espacios disponibles en el parqueo.")
-
         # Si es una reserva automática, asignar el horario actual
         if data.get('automatic', False):
             now = timezone.now().time()
@@ -103,6 +99,10 @@ class AutomaticReservationSerializer(serializers.ModelSerializer):
 
             if not current_schedule:
                 raise serializers.ValidationError("No hay horarios disponibles en este momento.")
+
+            # Verificar si el horario actual tiene capacidad
+            if current_schedule.actualCapacity <= 0:
+                raise serializers.ValidationError("No hay espacios disponibles en el horario actual.")
 
             data['parkingSchedule'] = current_schedule
 
@@ -114,28 +114,16 @@ class AutomaticReservationSerializer(serializers.ModelSerializer):
         reservation = Reservation.objects.create(
             vehicle=validated_data['vehicle'],
             parking=validated_data['parking'],
-            parkingSchedule=validated_data['parkingSchedule'],  # El horario se asigna en validate()
-            automatic=True,
-            state="A",  # Reserva en estado activo
-            payAmount=validated_data['parking'].fee  # Calcular el monto automáticamente
-        )
-        # Reducir la capacidad del parqueo en 1
-        reservation.parking.actualCapacity -= 1
-        reservation.parking.save()
-        return reservation
-
-
-    def create(self, validated_data):
-        # Crear la reserva automáticamente
-        reservation = Reservation.objects.create(
-            vehicle=validated_data['vehicle'],
-            parking=validated_data['parking'],
             parkingSchedule=validated_data['parkingSchedule'],
             automatic=True,
             state="A",  # Reserva en estado activo
             payAmount=validated_data['parking'].fee  # Calcular el monto automáticamente
         )
-        # Reducir la capacidad del parqueo en 1
-        reservation.parking.actualCapacity -= 1
-        reservation.parking.save()
+        # Reducir la capacidad del horario en 1
+        if reservation.parkingSchedule.actualCapacity > 0:
+            reservation.parkingSchedule.actualCapacity -= 1
+            reservation.parkingSchedule.save()
+        else:
+            raise serializers.ValidationError("No hay espacios disponibles en el horario actual.")
+
         return reservation

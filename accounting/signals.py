@@ -68,10 +68,6 @@ def handle_reservation_cancellation(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Reservation)
 def handle_reservation_payment(sender, instance, **kwargs):
-    """
-    Esta señal se ejecuta cuando se paga una reserva. Si la reserva está pagada, aumentamos la capacidad del parqueo.
-    """
-    if instance.state == 'P':  # Si la reserva está pagada
-        parking = instance.parking
-        parking.actualCapacity += 1
-        parking.save()
+    if instance.state == 'P':  # Si la reserva ha sido pagada
+        instance.parkingSchedule.actualCapacity += 1  # Incrementa la capacidad del horario específico
+        instance.parkingSchedule.save()

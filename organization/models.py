@@ -36,27 +36,28 @@ class ParkingSchedule(models.Model):
     schedule = models.ForeignKey('organization.Schedule', on_delete=models.CASCADE)
     actualCapacity = models.PositiveIntegerField(default=0)  # Capacidad actual para este horario específico
 
+    def recalculate_capacity(self):
+        """
+        Recalcula actualCapacity restando el número de reservas activas en este horario.
+        """
+        # Contar el número de reservas activas (estado "A" o según tu lógica)
+        active_reservations = Reservation.objects.filter(
+            parkingSchedule=self, state='A'  # Aquí se filtran las reservas activas
+        ).count()
+
+        # Restar el número de reservas activas a la capacidad total del parqueo
+        self.actualCapacity = self.parking.capacity - active_reservations
+        self.save()
+
     def save(self, *args, **kwargs):
-        # Al crear un nuevo horario, inicializar actualCapacity con la capacidad total del parqueo
-        if not self.pk or self.actualCapacity == 0:
+        # Inicializar la capacidad actual con la capacidad total del parqueo solo al crear un nuevo registro
+        if not self.pk:  # Solo cuando se crea el objeto
             self.actualCapacity = self.parking.capacity
 
         super().save(*args, **kwargs)
 
-    def clean(self):
-        overlapping_schedule = ParkingSchedule.objects.filter(
-            date=self.date,
-            parking=self.parking,
-            schedule__start_time__lt=self.schedule.end_time,
-            schedule__end_time__gt=self.schedule.start_time
-        ).exclude(pk=self.pk)
-
-        if overlapping_schedule.exists():
-            raise ValidationError('El horario solapa con otro horario asignado a este parqueo.')
-
     def __str__(self):
         return f'{self.parking} - {self.schedule}'
-
 
 
 

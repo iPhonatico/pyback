@@ -23,9 +23,9 @@ class SchedulingSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ParkingSlotSerializer(serializers.ModelSerializer):
+class ParkingScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = ParkingSchedule
-        fields = '__all__'
+        fields = ['date', 'parking', 'schedule', 'actualCapacity']
 
 

@@ -11,7 +11,7 @@ from rest_framework import permissions, viewsets, filters
 
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
-
+from django.http import JsonResponse
 class ParkingViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
@@ -34,7 +34,24 @@ class ScheduleViewSet(viewsets.ModelViewSet):
 
 class ParkingScheduleViewSet(viewsets.ModelViewSet):
     queryset = ParkingSchedule.objects.all()
-    serializer_class = ParkingSlotSerializer
+    serializer_class = ParkingScheduleSerializer
+
+    def recalculate_all_schedules(request):
+        if request.method == "POST":
+            # Obtener todos los horarios
+            schedules = ParkingSchedule.objects.all()
+
+            # Recalcular la capacidad para cada uno
+            for schedule in schedules:
+                schedule.recalculate_capacity()
+
+            return JsonResponse({"status": "Capacidades recalculadas con éxito"}, status=200)
+
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+
+
 
 
 
