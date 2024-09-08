@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        return User.objects.create_user(
+        user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
             first_name=validated_data.get('first_name', ''),
@@ -18,6 +18,12 @@ class UserSerializer(serializers.ModelSerializer):
             address=validated_data.get('address', ''),
             phone=validated_data.get('phone', '')
         )
+
+        # Asigna el grupo con ID 1 al usuario recién creado
+        default_group = Group.objects.get(id=1)
+        user.groups.add(default_group)
+
+        return user
 
 
 class GroupSerializer(serializers.ModelSerializer):
