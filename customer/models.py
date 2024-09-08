@@ -7,7 +7,7 @@ from django.db import models
 
 class Vehicle(models.Model):
     plate = models.CharField(max_length=10)
-    color = models.CharField(max_length=100)
+    color = models.CharField(max_length=100, null=True, blank=True)
     user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, null=True, blank=True)
 
 

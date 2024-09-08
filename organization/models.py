@@ -8,6 +8,7 @@ class Parking(models.Model):
     capacity = models.PositiveIntegerField(default=0)
     fee = models.DecimalField(decimal_places=2, max_digits=5)
     user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, null=True, blank=True)
+    available = models.BooleanField(default=True)
     def __str__(self):  #para que aparezca el nombre en el admin
         return self.name
 

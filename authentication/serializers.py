@@ -16,7 +16,6 @@ class UserSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', ''),
             identification=validated_data.get('identification', ''),
             address=validated_data.get('address', ''),
-            state=validated_data.get('state', ''),
             phone=validated_data.get('phone', '')
         )
 

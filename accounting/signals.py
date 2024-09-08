@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.exceptions import ValidationError
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_save
@@ -8,10 +10,10 @@ from accounting.models import Reservation
 
 @receiver(post_save, sender=Reservation)
 def create_reservation_post(sender, instance:Reservation, created, **kwargs):
-    if created and instance.fechaHoraInicio < timezone.now():
+    if created and instance.parkingSchedule.date < timezone.now().date():
         raise ValidationError("La reserva no puede iniciar en el pasado")
-    if created and instance.parking.current_spaces > 0:
-        instance.parking.current_spaces -= 1
+    if created and instance.parking.available > 0:
+        instance.parking.available -= 1
         instance.parking.save()
 
     elif created:
