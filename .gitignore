@@ -4,4 +4,3 @@ db.sqlite3
 /accounting/__pycache__/
 /authentication/__pycache__/
 /customer/__pycache__/
-/organization/
