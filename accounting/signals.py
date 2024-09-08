@@ -32,14 +32,16 @@ def check_availability_before_reservation(sender, instance, **kwargs):
     Esta señal se ejecuta antes de guardar una reserva para verificar si el horario está disponible.
     Si el horario no está disponible o no hay capacidad en el parqueo, lanzamos un error.
     """
-    parking_schedule = instance.parkingSchedule
-    if not parking_schedule.available:
-        raise ValueError("El horario seleccionado no está disponible.")
+    # Solo verificar disponibilidad si la reserva está activa o se está creando
+    if instance.state == 'A':
+        parking_schedule = instance.parkingSchedule
+        if not parking_schedule.available:
+            raise ValueError("El horario seleccionado no está disponible.")
 
-    # Verificar si el parqueo tiene capacidad disponible
-    parking = instance.parking
-    if parking.actualCapacity <= 0:
-        raise ValueError("No hay capacidad disponible en el parqueo.")
+        # Verificar si el parqueo tiene capacidad disponible
+        parking = instance.parking
+        if parking.actualCapacity <= 0:
+            raise ValueError("No hay capacidad disponible en el parqueo.")
 
 
 @receiver(post_save, sender=Reservation)

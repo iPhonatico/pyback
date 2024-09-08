@@ -33,23 +33,28 @@ class Reservation(models.Model):
         super().save(*args, **kwargs)
 
     def pay_reservation(self):
-        # Actualiza el estado a "Payed" y aumenta la capacidad del parqueo en 1
-        if self.state == 'A':
+        """
+        Marca la reserva como pagada si está activa y guarda los cambios.
+        """
+        if self.state == 'A':  # Solo si la reserva está activa
             self.state = 'P'
-            self.parking.actualCapacity += 1
-            self.parking.save()
-            self.save()
+            self.save()  # Al guardar, la señal se activará para liberar espacio en el parqueo
+        else:
+            raise ValidationError("Solo las reservas activas pueden ser pagadas.")
+
+
 
     def cancel_reservation(self):
-        # Cambia el estado a "Cancel" sin modificar la capacidad del parqueo
-        self.state = 'C'
-        self.save()
+        """
+        Cancela la reserva cambiando su estado a "C" (Cancel) y ejecuta las señales correspondientes
+        para liberar la capacidad del parqueo y el horario.
+        """
+        if self.state == "A":  # Solo las reservas activas pueden ser canceladas
+            self.state = "C"
+            self.save()  # Al guardar, la señal se activará para liberar el horario y la capacidad
+        else:
+            raise ValidationError("Solo las reservas activas pueden ser canceladas.")
 
-    def get_user_from_plate(self):
-        """
-        Obtiene el usuario basado en el vehículo (que está relacionado con el usuario) usando la placa.
-        """
-        return self.vehicle.owner  # Asumiendo que 'owner' es el campo que relaciona vehículo con el usuario
 
     def __str__(self):
         return f'Reserva de {self.vehicle.plate} en {self.parking.name}'

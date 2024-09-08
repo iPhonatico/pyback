@@ -13,6 +13,8 @@ class Vehicle(models.Model):
 
 
 
+
+
     def __str__(self):  #para que aparezca el nombre en el admin
         return self.plate
 
