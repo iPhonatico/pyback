@@ -1,3 +1,7 @@
 /env/
 db.sqlite3
-pyback/__pycache__
+/pyback/__pycache__
+/accounting/__pycache__/
+/authentication/__pycache__/
+/customer/__pycache__/
+/organization/
