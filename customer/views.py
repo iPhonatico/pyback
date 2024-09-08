@@ -70,7 +70,8 @@ class VehicleViewSet(viewsets.ModelViewSet):
     serializer_class = VehicleSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['color']
-    filterset_fields = ['plate']
+    filterset_fields = ['plate','user__id']
+
 
 
 
