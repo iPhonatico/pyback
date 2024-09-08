@@ -12,17 +12,16 @@ from rest_framework import permissions, viewsets, filters
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from django.http import JsonResponse
+from .filters import ParkingFilter
+
+
 class ParkingViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
     queryset = Parking.objects.all()
     serializer_class = ParkingSerializer
-    #permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = ParkingFilter  # Asignar el filtro personalizado
     search_fields = ['name']
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-
+    #permission_classes = [IsAuthenticated, DjangoModelPermissions]
 
 
 class ScheduleViewSet(viewsets.ModelViewSet):

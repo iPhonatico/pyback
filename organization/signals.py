@@ -10,10 +10,10 @@ def handle_reservation_change(sender, instance, created, **kwargs):
     parking_schedule = instance.parkingSchedule
 
     if created and instance.state == 'A':
-        # Si la reserva es nueva y activa, reduce la capacidad
+        # Si la reserva es nueva y activa, reduce la capacidad en el ParkingSchedule
         parking_schedule.actualCapacity -= 1
     elif instance.state == 'C':
-        # Si la reserva es cancelada, aumenta la capacidad
+        # Si la reserva es cancelada, aumenta la capacidad en el ParkingSchedule
         parking_schedule.actualCapacity += 1
 
     parking_schedule.save()
