@@ -35,6 +35,8 @@ class ScheduleViewSet(viewsets.ModelViewSet):
 class ParkingScheduleViewSet(viewsets.ModelViewSet):
     queryset = ParkingSchedule.objects.all()
     serializer_class = ParkingScheduleSerializer
+    filter_backends = [DjangoFilterBackend]  # Activa los filtros
+    filterset_fields = ['parking', 'schedule']  # Filtro por el campo 'parking'
 
     def recalculate_all_schedules(request):
         if request.method == "POST":
