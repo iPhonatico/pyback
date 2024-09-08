@@ -2,7 +2,10 @@ import requests
 from django.conf import settings
 from rest_framework import serializers
 from customer.models import Vehicle
+from organization.models import Parking
 from .models import Reservation
+from django.utils import timezone
+from organization.models import ParkingSchedule
 
 class VehicleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -68,3 +71,71 @@ class ReservationSerializer(serializers.ModelSerializer):
 
         # Actualiza los otros campos de la reserva
         return super().update(instance, validated_data)
+
+
+class AutomaticReservationSerializer(serializers.ModelSerializer):
+    plate = serializers.CharField(write_only=True)  # Solo se pasa la placa, no el vehículo completo
+    color = serializers.CharField(write_only=True)  # Se pasa el color del vehículo
+    parking = serializers.PrimaryKeyRelatedField(queryset=Parking.objects.all())  # Se pasa el ID del parqueo
+    automatic = serializers.BooleanField(default=True)
+
+    class Meta:
+        model = Reservation
+        fields = ['plate', 'color', 'parking', 'automatic']
+
+    def validate(self, data):
+        plate = data.get('plate').strip().upper()
+        parking = data.get('parking')
+
+        # Buscar el vehículo por la placa. Si no existe, crearlo
+        vehicle, created = Vehicle.objects.get_or_create(plate=plate, defaults={'color': data.get('color')})
+
+        # Verificar si el parqueo tiene capacidad
+        if parking.actualCapacity <= 0:
+            raise serializers.ValidationError("No hay espacios disponibles en el parqueo.")
+
+        # Si es una reserva automática, asignar el horario actual
+        if data.get('automatic', False):
+            now = timezone.now().time()
+            current_schedule = ParkingSchedule.objects.filter(
+                schedule__start_time__lte=now, schedule__end_time__gte=now, parking=parking
+            ).first()
+
+            if not current_schedule:
+                raise serializers.ValidationError("No hay horarios disponibles en este momento.")
+
+            data['parkingSchedule'] = current_schedule
+
+        data['vehicle'] = vehicle
+        return data
+
+    def create(self, validated_data):
+        # Crear la reserva automáticamente
+        reservation = Reservation.objects.create(
+            vehicle=validated_data['vehicle'],
+            parking=validated_data['parking'],
+            parkingSchedule=validated_data['parkingSchedule'],  # El horario se asigna en validate()
+            automatic=True,
+            state="A",  # Reserva en estado activo
+            payAmount=validated_data['parking'].fee  # Calcular el monto automáticamente
+        )
+        # Reducir la capacidad del parqueo en 1
+        reservation.parking.actualCapacity -= 1
+        reservation.parking.save()
+        return reservation
+
+
+    def create(self, validated_data):
+        # Crear la reserva automáticamente
+        reservation = Reservation.objects.create(
+            vehicle=validated_data['vehicle'],
+            parking=validated_data['parking'],
+            parkingSchedule=validated_data['parkingSchedule'],
+            automatic=True,
+            state="A",  # Reserva en estado activo
+            payAmount=validated_data['parking'].fee  # Calcular el monto automáticamente
+        )
+        # Reducir la capacidad del parqueo en 1
+        reservation.parking.actualCapacity -= 1
+        reservation.parking.save()
+        return reservation

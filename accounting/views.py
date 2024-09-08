@@ -12,11 +12,12 @@ from .serializers import *
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework import filters
-
+from django.utils.dateparse import parse_date
 
 
 from rest_framework.response import Response
 from .serializers import ReservationSerializer
+from accounting.filters import ReservationFilter
 
 
 
@@ -27,8 +28,9 @@ class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['state']
+    filterset_class = ReservationFilter  # Asignar el filtro personalizado
     search_fields = ['vehicle__plate']
+
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
@@ -43,17 +45,27 @@ class ReservationViewSet(viewsets.ModelViewSet):
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-
-    # Acción personalizada para marcar una reserva como pagada
     @action(detail=True, methods=['post'])
     def pay(self, request, pk=None):
+        """
+        Acción personalizada para pagar una reserva.
+        """
         reservation = self.get_object()
 
         try:
-            reservation.pay_reservation()  # Llama al método para marcar la reserva como pagada
+            reservation.pay_reservation()
             return Response({'status': 'Reserva pagada'}, status=status.HTTP_200_OK)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'])
+    def automatic(self, request):
+        serializer = AutomaticReservationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"status": "Reserva automática creada con éxito"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 

@@ -36,15 +36,11 @@ class Schedule(models.Model):
 
 
 
-    def __str__(self):
-        return str(self.start_time) + " - " + str(self.end_time)
-
-
 class ParkingSchedule(models.Model):
     date = models.DateField()
     parking = models.ForeignKey('organization.Parking', on_delete=models.CASCADE)
     schedule = models.ForeignKey('organization.Schedule', on_delete=models.CASCADE)
-    available = models.BooleanField(default=True)
+    #available = models.BooleanField(default=True)  # Puedes eliminar este campo si ya no es necesario
 
     def clean(self):
         overlapping_schedule = ParkingSchedule.objects.filter(
@@ -59,7 +55,6 @@ class ParkingSchedule(models.Model):
 
     def __str__(self):
         return f'{self.parking} - {self.schedule}'
-
 
 
 
