@@ -6,3 +6,4 @@ whitenoise
 django-cors-headers
 gunicorn
 pymysql
+django-cors-headers

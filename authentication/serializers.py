@@ -13,7 +13,11 @@ class UserSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             password=validated_data['password'],
             first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', '')
+            last_name=validated_data.get('last_name', ''),
+            identification=validated_data.get('identification', ''),
+            address=validated_data.get('address', ''),
+            state=validated_data.get('state', ''),
+            phone=validated_data.get('phone', '')
         )
 
 

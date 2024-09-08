@@ -4,8 +4,9 @@ from django.db import models
 class Reservation(models.Model):
     state_choices = (("P","Payed"),("A","Active"),("C","Cancel"))
 
-    fechaHoraInicio = models.DateTimeField()
-    fechaHoraFin = models.DateTimeField(null= True, blank=True)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
     state = models.CharField(max_length=1,default="A", choices=state_choices)
     parking = models.ForeignKey('organization.Parking', on_delete=models.CASCADE)
     #client = models.ForeignKey('customer.Client', on_delete=models.CASCADE, related_name="reservations", null=True, blank=True)

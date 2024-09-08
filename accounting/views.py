@@ -29,6 +29,13 @@ class ReservationViewSet(viewsets.ModelViewSet):
     filterset_fields = ['state']
     search_fields = ['vehicle__plate']
 
+
+
+
+
+
+
+
     # permission_classes =
 
     # def get_queryset(self):
