@@ -2,6 +2,8 @@ from django.db import models
 from django.core.exceptions import ValidationError
 # Create your models here.
 
+from accounting.models import Reservation
+
 class Parking(models.Model):
     name = models.CharField(max_length=100)
     address = models.TextField()
@@ -38,14 +40,9 @@ class ParkingSchedule(models.Model):
 
     def recalculate_capacity(self):
         """
-        Recalcula actualCapacity restando el número de reservas activas en este horario.
+        Recalcula la capacidad actual restando las reservas activas en este horario.
         """
-        # Contar el número de reservas activas (estado "A" o según tu lógica)
-        active_reservations = Reservation.objects.filter(
-            parkingSchedule=self, state='A'  # Aquí se filtran las reservas activas
-        ).count()
-
-        # Restar el número de reservas activas a la capacidad total del parqueo
+        active_reservations = Reservation.objects.filter(parkingSchedule=self, state='A').count()
         self.actualCapacity = self.parking.capacity - active_reservations
         self.save()
 

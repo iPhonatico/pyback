@@ -6,4 +6,4 @@ class OrganizationConfig(AppConfig):
     name = 'organization'
 
     def ready(self):
-        import organization.signals  # Registrar las señal
+        import organization.signals  # Registrar las señales
