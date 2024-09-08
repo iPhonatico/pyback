@@ -34,12 +34,14 @@ class ParkingViewSet(viewsets.ModelViewSet):
             available_schedules = ParkingSchedule.objects.filter(parking=parking, actualCapacity__gt=0)
 
             if not available_schedules.exists():
-                return Response({"detail": "No hay horarios disponibles para este parqueo."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"detail": "No hay horarios disponibles para este parqueo."},
+                                status=status.HTTP_404_NOT_FOUND)
 
             # Crear respuesta con horarios disponibles
             result = []
             for schedule in available_schedules:
                 result.append({
+                    "parkingschedule_id": schedule.id,  # Agregamos el ID del ParkingSchedule
                     "date": schedule.date,
                     "schedule": {
                         "start_time": schedule.schedule.start_time,
