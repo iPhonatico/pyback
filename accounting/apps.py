@@ -6,4 +6,6 @@ class AccountingConfig(AppConfig):
     name = 'accounting'
 
     def ready(self):
-        from accounting import signals
+        import accounting.signals
+
+

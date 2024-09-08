@@ -28,7 +28,7 @@ class ParkingViewSet(viewsets.ModelViewSet):
 class ScheduleViewSet(viewsets.ModelViewSet):
     queryset = Schedule.objects.all()
     serializer_class = SchedulingSerializer
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    #permission_classes = [IsAuthenticated, DjangoModelPermissions]
 
 
 

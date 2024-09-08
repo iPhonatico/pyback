@@ -53,6 +53,17 @@ class ReservationSerializer(serializers.ModelSerializer):
 
         return super().update(instance, validated_data)
 
+    def validate(self, data):
+        # Verificar si el vehículo con la placa especificada existe
+        plate = data.get('plate')
+        try:
+            vehicle = Vehicle.objects.get(plate=plate)
+            data['vehicle'] = vehicle  # Asignar el vehículo al campo vehicle
+        except Vehicle.DoesNotExist:
+            raise serializers.ValidationError("El vehículo con la placa proporcionada no existe.")
+
+        return data
+
 
 
 

@@ -6,36 +6,64 @@ from django.db.models.signals import post_save, pre_save
 from django.utils import timezone
 
 from accounting.models import Reservation
+from organization.models import ParkingSchedule, Parking  # Asegúrate de que los imports sean correctos
 
 
 @receiver(post_save, sender=Reservation)
-def create_reservation_post(sender, instance:Reservation, created, **kwargs):
-    if created and instance.parkingSchedule.date < timezone.now().date():
-        raise ValidationError("La reserva no puede iniciar en el pasado")
-    if created and instance.parking.available > 0:
-        instance.parking.available -= 1
-        instance.parking.save()
+def update_parking_schedule_availability(sender, instance, created, **kwargs):
+    """
+    Esta señal se ejecuta cuando se crea o guarda una reserva.
+    Si la reserva es creada y está activa, marcamos el horario como no disponible y reducimos la capacidad del parqueo.
+    """
+    if created and instance.state == 'A':  # Solo si la reserva está activa
+        parking_schedule = instance.parkingSchedule
+        parking_schedule.available = False  # Marcar el horario como no disponible
+        parking_schedule.save()
 
-    elif created:
-        raise ValidationError("El parqueadero está lleno")
+        # Reducir la capacidad del parqueo en 1
+        parking = instance.parking
+        parking.actualCapacity -= 1
+        parking.save()
 
-    # if created:
-    #    print("Creado", instance)
-    # else:
-    #    print("Actualizado", instance)
-    #
 
 @receiver(pre_save, sender=Reservation)
-def create_reservation_pre(sender, instance: Reservation, **kwargs):
-    if instance.pk:
-        old_reservation = Reservation.objects.get(id=instance.id)
-        if old_reservation.state == "A" and instance.state == "P":
-            print("se ha pagado la reserva")
-            instance.parking.current_spaces += 1
-            instance.parking.save()
-    else:
+def check_availability_before_reservation(sender, instance, **kwargs):
+    """
+    Esta señal se ejecuta antes de guardar una reserva para verificar si el horario está disponible.
+    Si el horario no está disponible o no hay capacidad en el parqueo, lanzamos un error.
+    """
+    parking_schedule = instance.parkingSchedule
+    if not parking_schedule.available:
+        raise ValueError("El horario seleccionado no está disponible.")
 
-        print(instance.state)
-        last = Reservation.objects.filter(vehicle__plate=instance.vehicle.plate).last()
-        if instance.state == "A" and last and last.state == "A":
-            raise ValidationError("Ya existe una reserva activa para este vehiculo")
+    # Verificar si el parqueo tiene capacidad disponible
+    parking = instance.parking
+    if parking.actualCapacity <= 0:
+        raise ValueError("No hay capacidad disponible en el parqueo.")
+
+
+@receiver(post_save, sender=Reservation)
+def handle_reservation_cancellation(sender, instance, **kwargs):
+    """
+    Esta señal se ejecuta cuando se cancela una reserva. Si se cancela, liberamos el horario y aumentamos la capacidad.
+    """
+    if instance.state == 'C':  # Si la reserva está cancelada
+        parking_schedule = instance.parkingSchedule
+        parking_schedule.available = True  # Liberar el horario
+        parking_schedule.save()
+
+        # Aumentar la capacidad del parqueo en 1
+        parking = instance.parking
+        parking.actualCapacity += 1
+        parking.save()
+
+
+@receiver(post_save, sender=Reservation)
+def handle_reservation_payment(sender, instance, **kwargs):
+    """
+    Esta señal se ejecuta cuando se paga una reserva. Si la reserva está pagada, aumentamos la capacidad del parqueo.
+    """
+    if instance.state == 'P':  # Si la reserva está pagada
+        parking = instance.parking
+        parking.actualCapacity += 1
+        parking.save()

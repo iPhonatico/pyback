@@ -4,10 +4,10 @@ from rest_framework import routers
 from .views import *
 
 router = routers.DefaultRouter()
-router.register(r'parking', ParkingViewSet)
-router.register(r'schedule', ScheduleViewSet)
+router.register(r'parkings', ParkingViewSet)
+router.register(r'schedules', ScheduleViewSet)
 
-router.register(r'parkingschedule', ParkingScheduleViewSet)
+router.register(r'parkingschedules', ParkingScheduleViewSet)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
