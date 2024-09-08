@@ -5,7 +5,7 @@ from .views import *
 
 router = routers.DefaultRouter()
 router.register(r'clients', ClientViewSet)
-router.register(r'vehicles', VehicleViewSet)
+router.register('', VehicleViewSet)
 
 
 

@@ -27,6 +27,6 @@ urlpatterns = [
     path('api/authentication/', include(auth_urls)),
     path('api/organization/', include(org_urls)),
     path('api/accounting/', include(acc_urls)),
-    path('api/customer/', include(cust_urls)),
+    path('api/vehicles/', include(cust_urls)),
     path('api/token-auth/', obtain_auth_token)
 ]

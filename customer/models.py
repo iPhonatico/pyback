@@ -12,6 +12,7 @@ class Client(models.Model):
     state = models.BooleanField(default=True)
     parking = models.ForeignKey('organization.Parking', on_delete=models.CASCADE)
     vehicles = models.ManyToManyField('customer.Vehicle')
+    password = models.CharField(max_length=128, null=True, blank=True, default="password")
 
     def __str__(self):  #para que aparezca el nombre en el admin
         return self.name
@@ -26,6 +27,9 @@ class Client(models.Model):
 class Vehicle(models.Model):
     plate = models.CharField(max_length=10)
     color = models.CharField(max_length=100)
+    user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, null=True, blank=True)
+    #parking = models.ForeignKey('authentication.User', on_delete=models.CASCADE)
+
 
 
     def __str__(self):  #para que aparezca el nombre en el admin

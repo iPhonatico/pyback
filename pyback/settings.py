@@ -166,7 +166,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-PLATE_RECOGNIZER_URI = "http://localhost:5555"
+PLATE_RECOGNIZER_URI = "http://lector_placas_api:5555"
 
 STORAGES = {
     "staticfiles": {
