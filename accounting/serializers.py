@@ -7,6 +7,7 @@ from .models import Reservation
 from django.utils import timezone
 from organization.models import ParkingSchedule
 
+
 class VehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vehicle

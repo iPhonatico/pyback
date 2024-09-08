@@ -4,20 +4,17 @@ from accounting.models import Reservation
 
 @receiver(post_save, sender=Reservation)
 def handle_reservation_change(sender, instance, created, **kwargs):
-    """
-    Recalcula la capacidad del ParkingSchedule cuando se crea o cancela una reserva.
-    """
     parking_schedule = instance.parkingSchedule
+    print(f"Reserva creada o modificada para el horario {parking_schedule.id}. Capacidad antes de la actualización: {parking_schedule.actualCapacity}")
 
     if created and instance.state == 'A':
-        # Si la reserva es nueva y activa, reduce la capacidad en el ParkingSchedule
         parking_schedule.actualCapacity -= 1
+        print(f"Reserva creada. Capacidad después de la actualización: {parking_schedule.actualCapacity}")
     elif instance.state == 'C':
-        # Si la reserva es cancelada, aumenta la capacidad en el ParkingSchedule
         parking_schedule.actualCapacity += 1
+        print(f"Reserva cancelada. Capacidad después de la actualización: {parking_schedule.actualCapacity}")
 
     parking_schedule.save()
-
 
 @receiver(post_delete, sender=Reservation)
 def handle_reservation_delete(sender, instance, **kwargs):
