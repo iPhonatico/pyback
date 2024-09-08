@@ -10,6 +10,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, viewsets, filters
 
 from .serializers import *
+from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 
 class ParkingViewSet(viewsets.ModelViewSet):
     """
@@ -20,12 +21,14 @@ class ParkingViewSet(viewsets.ModelViewSet):
     #permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name']
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
 
 
 
 class ScheduleViewSet(viewsets.ModelViewSet):
     queryset = Schedule.objects.all()
     serializer_class = SchedulingSerializer
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
 
 
 
