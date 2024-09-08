@@ -11,21 +11,21 @@ from rest_framework import permissions, viewsets, filters
 from .serializers import *
 
 
-class ClientViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-    queryset = Client.objects.all()
-    serializer_class = ClientSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['email']
-    search_fields = ['name']
+# class ClientViewSet(viewsets.ModelViewSet):
+#     """
+#     API endpoint that allows users to be viewed or edited.
+#     """
+#     queryset = Client.objects.all()
+#     serializer_class = ClientSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+#     filterset_fields = ['email']
+#     search_fields = ['name']
 
 
-class ClientByVehicleViewSet(viewsets.ModelViewSet):
-    queryset = Client.objects.all()
-    serializer_class = ClientByVehicleSerializer
+# class ClientByVehicleViewSet(viewsets.ModelViewSet):
+#     queryset = Client.objects.all()
+#     serializer_class = ClientByVehicleSerializer
 
 
 class VehicleViewSet(viewsets.ModelViewSet):
@@ -48,17 +48,17 @@ from rest_framework import permissions, viewsets, filters
 from .serializers import *
 
 
-class ClientViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-    queryset = Client.objects.all()
-    serializer_class = ClientSerializer
-    #PARA LEVANTAR AUTENTICACIÓNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['email']
-    search_fields = ['name']
+# class ClientViewSet(viewsets.ModelViewSet):
+#     """
+#     API endpoint that allows users to be viewed or edited.
+#     """
+#     queryset = Client.objects.all()
+#     serializer_class = ClientSerializer
+#     #PARA LEVANTAR AUTENTICACIÓNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+#     permission_classes = [permissions.IsAuthenticated]
+#     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+#     filterset_fields = ['email']
+#     search_fields = ['name']
 
 
 

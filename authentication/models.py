@@ -9,8 +9,8 @@ from organization.models import Parking
 
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-    identification = models.CharField(max_length=10, default='999999999')
-    address= models.TextField(null=True, blank=True)
+    identification = models.CharField(max_length=10)
+    address= models.CharField(max_length=254, null=True, blank=True)
     phone = models.CharField(max_length=10, null=True, blank=True)
     state= models.BooleanField(default=True)
 
