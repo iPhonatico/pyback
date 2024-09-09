@@ -6,6 +6,7 @@ from organization.models import Parking
 from .models import Reservation
 from django.utils import timezone
 from organization.models import ParkingSchedule
+from datetime import timedelta
 
 
 class VehicleSerializer(serializers.ModelSerializer):
@@ -59,6 +60,8 @@ class ReservationSerializer(serializers.ModelSerializer):
         # Crea la reserva con los datos validados y el vehículo encontrado o creado
         return Reservation.objects.create(vehicle=vehicle, **validated_data)
 
+
+
     def update(self, instance, validated_data):
         # Actualización de la reserva, pero ignora el vehículo
         if "vehicle" in validated_data:
@@ -74,37 +77,50 @@ class ReservationSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+
+
 class AutomaticReservationSerializer(serializers.ModelSerializer):
     plate = serializers.CharField(write_only=True)
-    color = serializers.CharField(write_only=True)
     parking = serializers.PrimaryKeyRelatedField(queryset=Parking.objects.all())
     automatic = serializers.BooleanField(default=True)
 
     class Meta:
         model = Reservation
-        fields = ['plate', 'color', 'parking', 'automatic']
+        fields = ['plate', 'parking', 'automatic']
 
     def validate(self, data):
         plate = data.get('plate').strip().upper()
         parking = data.get('parking')
 
         # Buscar o crear el vehículo por la placa
-        vehicle, created = Vehicle.objects.get_or_create(plate=plate, defaults={'color': data.get('color')})
+        vehicle, created = Vehicle.objects.get_or_create(plate=plate)
 
-        # Obtener la hora actual
-        now = timezone.now().time()
-        print(f"Hora actual: {now}")  # Para depuración, elimina esto después
+        # Obtener la hora actual (ajusta según tu zona horaria)
+        now = timezone.now() - timedelta(hours=5)
+        now_time = now.time()
 
-        # Verificar si hay un horario con capacidad disponible para el parqueo
+        # Verificar si hay un horario disponible para el parqueo
         current_schedule = ParkingSchedule.objects.filter(
             parking=parking,
-            schedule__start_time__lte=now,
-            schedule__end_time__gte=now,
-            actualCapacity__gt=0  # Asegúrate de que haya capacidad en el horario
+            schedule__start_time__lte=now_time,
+            schedule__end_time__gte=now_time,
+            actualCapacity__gt=0
         ).first()
 
         if not current_schedule:
             raise serializers.ValidationError("No hay horarios disponibles en este momento.")
+
+        # Verificar la última reserva del vehículo en el horario actual
+        last_reservation = Reservation.objects.filter(
+            vehicle=vehicle,
+            parkingSchedule=current_schedule
+        ).order_by('-id').first()
+
+        # Si existe una última reserva en el mismo horario y no ha sido pagada o cancelada, no permitir una nueva reserva
+        if last_reservation and last_reservation.state not in ['P', 'C']:
+            raise serializers.ValidationError(
+                "La última reserva de este vehículo en este horario no ha sido pagada ni cancelada. Debe pagarla o cancelarla antes de hacer una nueva reserva."
+            )
 
         # Asignar el vehículo y el horario actual a los datos
         data['vehicle'] = vehicle
@@ -118,7 +134,7 @@ class AutomaticReservationSerializer(serializers.ModelSerializer):
             parking=validated_data['parking'],
             parkingSchedule=validated_data['parkingSchedule'],
             automatic=True,
-            state="A",  # Reserva en estado activo
-            payAmount=validated_data['parking'].fee  # Calcular el monto automáticamente
+            state="A",  # Estado Activo
+            payAmount=validated_data['parking'].fee
         )
         return reservation

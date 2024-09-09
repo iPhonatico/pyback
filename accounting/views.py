@@ -66,6 +66,14 @@ class ReservationViewSet(viewsets.ModelViewSet):
             return Response({"status": "Reserva automática creada con éxito"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['post'])
+    def automatic(self, request):
+        serializer = AutomaticReservationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"status": "Reserva automática creada con éxito"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
