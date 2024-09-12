@@ -121,7 +121,8 @@ DATABASES = {
             'PORT': '3306',
         }
 }
-
+#database-ecupark-dev.chmy268widby.us-east-2.rds.amazonaws.com    v2
+#database-ecupark-prueba.cpiokocgy0m9.us-east-1.rds.amazonaws.com  v1
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

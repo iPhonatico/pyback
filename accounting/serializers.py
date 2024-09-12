@@ -15,68 +15,72 @@ class VehicleSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+
 class ReservationSerializer(serializers.ModelSerializer):
     vehicle = VehicleSerializer(required=False)
-    automatic = serializers.BooleanField(required=False, write_only=True)
+    automatic = serializers.BooleanField(required=False, default=False)  # Por defecto es False
 
     class Meta:
         model = Reservation
         fields = "__all__"
 
-    def create(self, validated_data):
-        vehicle_data = {}
+    def validate(self, data):
+        vehicle_data = data.get('vehicle')
 
-        # Verifica si se ha proporcionado un vehículo o si debe usarse el reconocimiento automático
-        if "vehicle" in validated_data:
-            vehicle_data = validated_data.pop('vehicle')
-        elif "automatic" in validated_data and validated_data["automatic"]:
-            # Si se usa el reconocimiento automático, eliminar el campo 'automatic'
-            validated_data.pop("automatic")
-            plate_domain = getattr(settings, "PLATE_RECOGNIZER_URI")
+        # Verifica que el vehículo esté en los datos
+        if vehicle_data is None:
+            raise serializers.ValidationError("Debe proporcionar el vehículo.")
 
-            try:
-                # Realiza la solicitud al servicio externo para reconocimiento de placas
-                response = requests.get(f"{plate_domain}/leer_placa")
-                response.raise_for_status()  # Levanta una excepción si la respuesta HTTP es un error
-                plate_result = response.json()
-
-                if "results" in plate_result and len(plate_result["results"]) > 0:
-                    # Extrae la placa del primer resultado y asigna un color predeterminado
-                    vehicle_data["plate"] = plate_result["results"][0]["plate"]
-                    vehicle_data["color"] = "sin color"
-                else:
-                    raise serializers.ValidationError({"msg": "No se pudo encontrar la placa"})
-            except requests.RequestException as e:
-                # Maneja cualquier error relacionado con la solicitud HTTP
-                raise serializers.ValidationError({"msg": f"Error al comunicarse con el servicio de placas: {str(e)}"})
-        else:
-            raise serializers.ValidationError("Debe proporcionar el vehículo o usar reconocimiento automático.")
-
-        # Busca o crea el vehículo basado en la placa
-        vehicle = Vehicle.objects.filter(plate=vehicle_data.get("plate")).last()
+        # Busca el vehículo en la base de datos
+        vehicle = Vehicle.objects.filter(plate=vehicle_data.get('plate')).last()
         if vehicle is None:
-            vehicle = Vehicle.objects.create(**vehicle_data)
+            raise serializers.ValidationError("El vehículo no existe.")
 
-        # Crea la reserva con los datos validados y el vehículo encontrado o creado
-        return Reservation.objects.create(vehicle=vehicle, **validated_data)
+        # Verificar si ya existe una reserva activa o pagada para este vehículo en el mismo ParkingSchedule
+        parking_schedule = data.get('parkingSchedule')
+        existing_reservation = Reservation.objects.filter(
+            vehicle=vehicle,
+            parkingSchedule=parking_schedule,
+            state__in=['A', 'P']  # Activo o pagado
+        ).exists()
 
+        if existing_reservation:
+            raise serializers.ValidationError(
+                "Ya existe una reserva activa o pagada para este vehículo en el mismo horario."
+            )
 
+        # Validar la capacidad disponible en el horario
+        if parking_schedule.actualCapacity <= 0:
+            raise serializers.ValidationError("No hay capacidad disponible para este horario.")
+
+        return data
+
+    def create(self, validated_data):
+        vehicle_data = validated_data.pop('vehicle')
+        vehicle = Vehicle.objects.get_or_create(plate=vehicle_data['plate'], defaults=vehicle_data)[0]
+
+        # Crear la reserva manualmente y reducir la capacidad
+        reservation = Reservation.objects.create(
+            vehicle=vehicle,
+            **validated_data
+        )
+
+        # Reducir la capacidad del parkingSchedule
+        parking_schedule = validated_data.get('parkingSchedule')
+        parking_schedule.actualCapacity -= 1
+        parking_schedule.save()
+
+        return reservation
 
     def update(self, instance, validated_data):
-        # Actualización de la reserva, pero ignora el vehículo
         if "vehicle" in validated_data:
             vehicle_data = validated_data.pop("vehicle")
-
-            # Actualiza el vehículo si es necesario (si tienes una lógica específica para esto)
             vehicle = Vehicle.objects.filter(plate=vehicle_data.get("plate")).last()
             if vehicle is None:
                 vehicle = Vehicle.objects.create(**vehicle_data)
             instance.vehicle = vehicle
 
-        # Actualiza los otros campos de la reserva
         return super().update(instance, validated_data)
-
-
 
 
 class AutomaticReservationSerializer(serializers.ModelSerializer):
@@ -95,7 +99,7 @@ class AutomaticReservationSerializer(serializers.ModelSerializer):
         # Buscar o crear el vehículo por la placa
         vehicle, created = Vehicle.objects.get_or_create(plate=plate)
 
-        # Obtener la hora actual (ajusta según tu zona horaria)
+        # Obtener la hora actual (ajustar según la zona horaria)
         now = timezone.now() - timedelta(hours=5)
         now_time = now.time()
 
@@ -110,16 +114,17 @@ class AutomaticReservationSerializer(serializers.ModelSerializer):
         if not current_schedule:
             raise serializers.ValidationError("No hay horarios disponibles en este momento.")
 
-        # Verificar la última reserva del vehículo en el horario actual
+        # Verificar si ya existe una reserva para este vehículo en el mismo horario
         last_reservation = Reservation.objects.filter(
             vehicle=vehicle,
-            parkingSchedule=current_schedule
-        ).order_by('-id').first()
+            parkingSchedule=current_schedule,
+            state__in=['A', 'P']  # Activo o pagado
+        ).exists()
 
-        # Si existe una última reserva en el mismo horario y no ha sido pagada o cancelada, no permitir una nueva reserva
-        if last_reservation and last_reservation.state not in ['P', 'C']:
+        # No permitir otra reserva si ya existe una activa o pagada
+        if last_reservation:
             raise serializers.ValidationError(
-                "La última reserva de este vehículo en este horario no ha sido pagada ni cancelada. Debe pagarla o cancelarla antes de hacer una nueva reserva."
+                "Ya existe una reserva activa o pagada para este vehículo en el mismo horario."
             )
 
         # Asignar el vehículo y el horario actual a los datos
@@ -137,4 +142,10 @@ class AutomaticReservationSerializer(serializers.ModelSerializer):
             state="A",  # Estado Activo
             payAmount=validated_data['parking'].fee
         )
+
+        # Reducir la capacidad del parkingSchedule
+        parking_schedule = validated_data.get('parkingSchedule')
+        parking_schedule.actualCapacity -= 1
+        parking_schedule.save()
+
         return reservation

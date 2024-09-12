@@ -22,23 +22,17 @@ from accounting.filters import ReservationFilter
 
 
 class ReservationViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ReservationFilter  # Asignar el filtro personalizado
-    search_fields = ['vehicle__plate']
 
+    # Agregar búsqueda por nombre de usuario e identificación del vehículo
+    search_fields = ['vehicle__plate', 'vehicle__user__name', 'vehicle__user__identification']
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
-        """
-        Acción personalizada para cancelar una reserva.
-        """
         reservation = self.get_object()
-
         try:
             reservation.cancel_reservation()
             return Response({'status': 'Reserva cancelada'}, status=status.HTTP_200_OK)
@@ -47,11 +41,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def pay(self, request, pk=None):
-        """
-        Acción personalizada para pagar una reserva.
-        """
         reservation = self.get_object()
-
         try:
             reservation.pay_reservation()
             return Response({'status': 'Reserva pagada'}, status=status.HTTP_200_OK)
@@ -65,15 +55,6 @@ class ReservationViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response({"status": "Reserva automática creada con éxito"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=['post'])
-    def automatic(self, request):
-        serializer = AutomaticReservationSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"status": "Reserva automática creada con éxito"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 

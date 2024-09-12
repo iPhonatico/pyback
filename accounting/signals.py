@@ -2,19 +2,8 @@ from django.core.exceptions import ValidationError
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_save, post_delete
 from accounting.models import Reservation
-from organization.models import ParkingSchedule  # Elimina Parking de aquí
+from organization.models import ParkingSchedule
 
-@receiver(post_save, sender=Reservation)
-def update_parking_schedule_availability(sender, instance, created, **kwargs):
-    """
-    Esta señal se ejecuta cuando se crea o guarda una reserva.
-    Si la reserva es creada y está activa, reducimos la capacidad del parqueo.
-    """
-    parking_schedule = instance.parkingSchedule
-
-    if created and instance.state == 'A':  # Solo si la reserva está activa
-        parking_schedule.actualCapacity -= 1  # Reducir la capacidad del horario específico
-        parking_schedule.save()
 
 @receiver(pre_save, sender=Reservation)
 def check_availability_before_reservation(sender, instance, **kwargs):
@@ -32,8 +21,23 @@ def check_availability_before_reservation(sender, instance, **kwargs):
     ).count()
 
     # Verificar si todavía hay espacio disponible en el parqueo
-    if active_reservations >= parking_schedule.actualCapacity:
+    if active_reservations >= parking_schedule.parking.capacity:
         raise ValidationError("El parqueo ya ha alcanzado su capacidad máxima para este horario.")
+
+
+@receiver(post_save, sender=Reservation)
+def update_parking_schedule_availability(sender, instance, created, **kwargs):
+    """
+    Esta señal se ejecuta cuando se crea o guarda una reserva.
+    Si la reserva es creada y está activa, reducimos la capacidad del parqueo.
+    """
+    parking_schedule = instance.parkingSchedule
+
+    if created and instance.state == 'A':  # Solo si la reserva está activa
+        if parking_schedule.actualCapacity > 0:  # Verifica que la capacidad no sea negativa
+            parking_schedule.actualCapacity -= 1
+            parking_schedule.save()
+
 
 @receiver(post_save, sender=Reservation)
 def handle_reservation_cancellation(sender, instance, **kwargs):
@@ -43,8 +47,10 @@ def handle_reservation_cancellation(sender, instance, **kwargs):
     parking_schedule = instance.parkingSchedule
 
     if instance.state == 'C':  # Si la reserva está cancelada
-        parking_schedule.actualCapacity += 1  # Aumentar la capacidad del horario específico
-        parking_schedule.save()
+        if parking_schedule.actualCapacity < parking_schedule.parking.capacity:  # Verificar que no supere la capacidad máxima
+            parking_schedule.actualCapacity += 1
+            parking_schedule.save()
+
 
 @receiver(post_delete, sender=Reservation)
 def increase_capacity_on_reservation_delete(sender, instance, **kwargs):
@@ -54,5 +60,6 @@ def increase_capacity_on_reservation_delete(sender, instance, **kwargs):
     parking_schedule = instance.parkingSchedule
 
     if instance.state == 'A':  # Solo aumentar si la reserva estaba activa
-        parking_schedule.actualCapacity += 1
-        parking_schedule.save()
+        if parking_schedule.actualCapacity < parking_schedule.parking.capacity:  # Verificar que no supere la capacidad máxima
+            parking_schedule.actualCapacity += 1
+            parking_schedule.save()
