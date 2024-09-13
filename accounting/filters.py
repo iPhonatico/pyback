@@ -7,7 +7,8 @@ class ReservationFilter(django_filters.FilterSet):
     user_name = django_filters.CharFilter(field_name='vehicle__user__name', lookup_expr='icontains')
     user_identification = django_filters.CharFilter(field_name='vehicle__user__identification', lookup_expr='icontains')
     vehicle_plate = django_filters.CharFilter(field_name='vehicle__plate', lookup_expr='icontains')
+    user_id = django_filters.NumberFilter(field_name='vehicle__user__id')  # Filtrar por el ID del usuario
 
     class Meta:
         model = Reservation
-        fields = ['state', 'parking', 'parkingSchedule__date', 'user_name', 'user_identification', 'vehicle_plate']
+        fields = ['state', 'parking', 'parkingSchedule__date', 'user_name', 'user_identification', 'vehicle_plate', 'user_id']

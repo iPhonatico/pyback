@@ -13,7 +13,11 @@ class VehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vehicle
         fields = "__all__"
+    extra_fields = ['user_id']  # Añadir campo adicional
 
+    def get_user_id(self, obj):
+        # Accede al usuario relacionado con el vehículo
+        return obj.vehicle.user.id if obj.vehicle.user else None
 
 
 class ReservationSerializer(serializers.ModelSerializer):
