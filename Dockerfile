@@ -6,8 +6,9 @@ WORKDIR /code
 
 # set up python environment variables
 
-ENV PYTHONDOWNWRITEBYTECODE 1
-ENV PYTHONNUNBUFFER 1
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
 
 # update and  install dependencies
 RUN pip install --upgrade pip
@@ -20,4 +21,4 @@ ADD . /code/
 # Expose the port server is running on
 EXPOSE 8000
 
-ENTRYPOINT [ "gunicorn", "pyback.wsgi:application", "--bind", "0.0.0.0:8000" ]
+CMD [ "gunicorn", "pyback.wsgi:application", "--bind", "0.0.0.0:8000" ]

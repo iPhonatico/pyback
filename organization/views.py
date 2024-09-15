@@ -1,3 +1,4 @@
+from datetime import timezone
 from sched import scheduler
 
 from django.shortcuts import render
@@ -10,6 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.utils import timezone
 
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
@@ -23,6 +25,8 @@ class ParkingViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ParkingFilter
     search_fields = ['name']
+    filterset_fields = ['parking', 'schedule']  # Filtro por el campo 'parking'
+
 
     @action(detail=True, methods=['get'])
     def available_schedules(self, request, pk=None):
@@ -82,12 +86,31 @@ class ParkingScheduleViewSet(viewsets.ModelViewSet):
 
         return JsonResponse({"error": "Método no permitido"}, status=405)
 
+    @action(detail=True, methods=['get'], url_path='future-schedules')
+    def get_future_schedules(self, request, pk=None):
+        """
+        Devuelve los horarios futuros para un parqueo específico (mayores o iguales a la fecha actual).
+        """
+        parking_schedule = self.get_object()
+        today = timezone.now().date()
 
+        # Filtra los horarios mayores o iguales a la fecha actual
+        future_schedules = ParkingSchedule.objects.filter(parking=parking_schedule.parking, date__gte=today)
 
+        if not future_schedules.exists():
+            return Response({"detail": "No hay horarios futuros disponibles para este parqueo."}, status=404)
 
+        # Crear la respuesta con los horarios futuros
+        result = []
+        for schedule in future_schedules:
+            result.append({
+                "parkingschedule_id": schedule.id,
+                "date": schedule.date,
+                "schedule": {
+                    "start_time": schedule.schedule.start_time,
+                    "end_time": schedule.schedule.end_time,
+                },
+                "available_capacity": schedule.actualCapacity
+            })
 
-
-
-
-
-
+        return Response(result, status=200)

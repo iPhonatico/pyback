@@ -7,7 +7,7 @@ router = routers.DefaultRouter()
 router.register(r'parkings', ParkingViewSet)
 router.register(r'schedules', ScheduleViewSet)
 
-router.register(r'parkingschedules', ParkingScheduleViewSet)
+router.register(r'parkingschedules', ParkingScheduleViewSet, basename='parkingschedule')
 
 
 
