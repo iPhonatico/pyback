@@ -26,7 +26,7 @@ class VehicleSerializer(serializers.ModelSerializer):
 class ReservationSerializer(serializers.ModelSerializer):
     vehicle = VehicleSerializer(required=False)
     automatic = serializers.BooleanField(required=False, default=False)
-    parking = serializers.PrimaryKeyRelatedField(queryset=Parking.objects.all())  # Relación con el modelo Parking
+    parking = ParkingSerializer(read_only=True)  # Relación con el modelo Parking
     schedule_time = serializers.SerializerMethodField()  # Para mostrar la fecha y la hora del horario
     user = serializers.SerializerMethodField()  # Para mostrar la información del usuario
 
