@@ -11,4 +11,3 @@ Este proyecto gestiona las reservas de parqueo, incluyendo la capacidad dinámic
 - Django Signals
 - Postman para realizar pruebas de API
 
-

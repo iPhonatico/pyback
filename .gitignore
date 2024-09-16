@@ -5,3 +5,7 @@ db.sqlite3
 /authentication/__pycache__/
 /customer/__pycache__/
 /organization/__pycache__/
+*.pyc
+
+**/__pycache__/
+**/migrations/__pycache__/

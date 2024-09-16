@@ -29,7 +29,7 @@ class Reservation(models.Model):
         # Si no se ha especificado el monto a pagar, usar la tarifa del parqueo
         if not self.payAmount:
             self.payAmount = self.calculate_payment()
-
+        print(f"Se está llamando a save() para la reserva. ID: {self.id}, Estado: {self.state}")
         super().save(*args, **kwargs)
 
     def pay_reservation(self):
