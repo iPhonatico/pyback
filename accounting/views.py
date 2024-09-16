@@ -16,6 +16,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
     serializer_class = ReservationSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ReservationFilter  # Asignar el filtro personalizado
+    filterset_fields = ['parking']  # Permitir filtrar por parqueo
 
     # Agregar búsqueda por nombre de usuario e identificación del vehículo
     search_fields = ['vehicle__plate', 'vehicle__user__name', 'vehicle__user__identification']
@@ -103,3 +104,28 @@ class ReservationViewSet(viewsets.ModelViewSet):
         reservation.parkingSchedule.save()
 
         return Response({'status': 'Reserva pagada con éxito'}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def by_user(self, request):
+        """
+        Filtra las reservas por el usuario autenticado.
+        """
+        user = request.user
+        # Ordenar por la fecha y hora del parkingSchedule
+        reservations = Reservation.objects.filter(vehicle__user=user).order_by('parkingSchedule__date', 'parkingSchedule__schedule__start_time')
+        serializer = self.get_serializer(reservations, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def by_parking(self, request):
+        """
+        Filtra las reservas por parqueadero específico.
+        """
+        parking_id = request.query_params.get('parking', None)
+        if parking_id is None:
+            return Response({"error": "Debe proporcionar un id de parqueadero."}, status=400)
+
+        # Ordenar por la fecha y hora del parkingSchedule
+        reservations = Reservation.objects.filter(parking__id=parking_id).order_by('parkingSchedule__date', 'parkingSchedule__schedule__start_time')
+        serializer = self.get_serializer(reservations, many=True)
+        return Response(serializer.data)

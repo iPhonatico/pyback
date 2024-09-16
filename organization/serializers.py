@@ -26,7 +26,7 @@ class SchedulingSerializer(serializers.ModelSerializer):
 class ParkingScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = ParkingSchedule
-        fields = ['date', 'parking', 'schedule', 'actualCapacity']
+        fields = ['id', 'date', 'parking', 'schedule', 'actualCapacity']
 
     def validate(self, data):
         parking = data.get('parking')

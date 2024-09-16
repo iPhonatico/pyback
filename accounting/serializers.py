@@ -1,8 +1,11 @@
 import requests
 from django.conf import settings
 from rest_framework import serializers
+
+from authentication.serializers import UserSerializer
 from customer.models import Vehicle
 from organization.models import Parking
+from organization.serializers import ParkingSerializer
 from .models import Reservation
 from django.utils import timezone
 from organization.models import ParkingSchedule
@@ -22,11 +25,38 @@ class VehicleSerializer(serializers.ModelSerializer):
 
 class ReservationSerializer(serializers.ModelSerializer):
     vehicle = VehicleSerializer(required=False)
-    automatic = serializers.BooleanField(required=False, default=False)  # Por defecto es False
+    automatic = serializers.BooleanField(required=False, default=False)
+    parking = serializers.PrimaryKeyRelatedField(queryset=Parking.objects.all())  # Relación con el modelo Parking
+    schedule_time = serializers.SerializerMethodField()  # Para mostrar la fecha y la hora del horario
+    user = serializers.SerializerMethodField()  # Para mostrar la información del usuario
 
     class Meta:
         model = Reservation
-        fields = "__all__"
+        fields = ['id', 'payAmount', 'state', 'parking', 'vehicle', 'parkingSchedule', 'automatic', 'schedule_time', 'user']
+
+    def get_schedule_time(self, obj):
+        # Combinar la fecha y el tiempo del horario en un solo campo
+        return {
+            "date": obj.parkingSchedule.date,
+            "start_time": obj.parkingSchedule.schedule.start_time,
+            "end_time": obj.parkingSchedule.schedule.end_time
+        }
+
+    def get_user(self, obj):
+        """
+        Retorna la información del usuario asociado al vehículo de la reserva.
+        """
+        if obj.vehicle and obj.vehicle.user:
+            return {
+                "id": obj.vehicle.user.id,
+                "first_name": obj.vehicle.user.first_name,
+                "last_name": obj.vehicle.user.last_name,
+                "email": obj.vehicle.user.email,
+                "identification": obj.vehicle.user.identification,
+                "address": obj.vehicle.user.address,
+                "phone": obj.vehicle.user.phone
+            }
+        return None
 
     def validate(self, data):
         vehicle_data = data.get('vehicle')
@@ -85,7 +115,6 @@ class ReservationSerializer(serializers.ModelSerializer):
             instance.vehicle = vehicle
 
         return super().update(instance, validated_data)
-
 
 class AutomaticReservationSerializer(serializers.ModelSerializer):
     plate = serializers.CharField(write_only=True)
