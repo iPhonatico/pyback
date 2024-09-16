@@ -35,7 +35,6 @@ class ReservationSerializer(serializers.ModelSerializer):
         fields = ['id', 'payAmount', 'state', 'parking', 'vehicle', 'parkingSchedule', 'automatic', 'schedule_time', 'user']
 
     def get_schedule_time(self, obj):
-        # Combinar la fecha y el tiempo del horario en un solo campo
         return {
             "date": obj.parkingSchedule.date,
             "start_time": obj.parkingSchedule.schedule.start_time,
@@ -43,9 +42,6 @@ class ReservationSerializer(serializers.ModelSerializer):
         }
 
     def get_user(self, obj):
-        """
-        Retorna la información del usuario asociado al vehículo de la reserva.
-        """
         if obj.vehicle and obj.vehicle.user:
             return {
                 "id": obj.vehicle.user.id,
@@ -60,30 +56,25 @@ class ReservationSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         vehicle_data = data.get('vehicle')
+        parking_schedule = data.get('parkingSchedule')
 
-        # Verifica que el vehículo esté en los datos
-        if vehicle_data is None:
-            raise serializers.ValidationError("Debe proporcionar el vehículo.")
-
-        # Busca el vehículo en la base de datos
+        # Verifica si el vehículo tiene el estado activo
         vehicle = Vehicle.objects.filter(plate=vehicle_data.get('plate')).last()
         if vehicle is None:
             raise serializers.ValidationError("El vehículo no existe.")
+        if not vehicle.status:
+            raise serializers.ValidationError("No se pueden realizar reservaciones con un vehículo deshabilitado.")
 
-        # Verificar si ya existe una reserva activa o pagada para este vehículo en el mismo ParkingSchedule
-        parking_schedule = data.get('parkingSchedule')
+        # Verificar si ya existe una reserva activa o pagada
         existing_reservation = Reservation.objects.filter(
             vehicle=vehicle,
             parkingSchedule=parking_schedule,
             state__in=['A', 'P']  # Activo o pagado
         ).exists()
-
         if existing_reservation:
-            raise serializers.ValidationError(
-                "Ya existe una reserva activa o pagada para este vehículo en el mismo horario."
-            )
+            raise serializers.ValidationError("Ya existe una reserva activa o pagada para este vehículo en este horario.")
 
-        # Validar la capacidad disponible en el horario
+        # Validar la capacidad disponible en el horario (si el schedule tiene capacidad)
         if parking_schedule.actualCapacity <= 0:
             raise serializers.ValidationError("No hay capacidad disponible para este horario.")
 
@@ -93,28 +84,10 @@ class ReservationSerializer(serializers.ModelSerializer):
         vehicle_data = validated_data.pop('vehicle')
         vehicle = Vehicle.objects.get_or_create(plate=vehicle_data['plate'], defaults=vehicle_data)[0]
 
-        # Crear la reserva manualmente y reducir la capacidad
-        reservation = Reservation.objects.create(
-            vehicle=vehicle,
-            **validated_data
-        )
-
-        # Reducir la capacidad del parkingSchedule
-        parking_schedule = validated_data.get('parkingSchedule')
-        parking_schedule.actualCapacity -= 1
-        parking_schedule.save()
-
+        # Crear la reserva sin tocar la capacidad, eso será manejado por la señal
+        reservation = Reservation.objects.create(vehicle=vehicle, **validated_data)
         return reservation
 
-    def update(self, instance, validated_data):
-        if "vehicle" in validated_data:
-            vehicle_data = validated_data.pop("vehicle")
-            vehicle = Vehicle.objects.filter(plate=vehicle_data.get("plate")).last()
-            if vehicle is None:
-                vehicle = Vehicle.objects.create(**vehicle_data)
-            instance.vehicle = vehicle
-
-        return super().update(instance, validated_data)
 
 class AutomaticReservationSerializer(serializers.ModelSerializer):
     plate = serializers.CharField(write_only=True)
@@ -176,9 +149,5 @@ class AutomaticReservationSerializer(serializers.ModelSerializer):
             payAmount=validated_data['parking'].fee
         )
 
-        # Reducir la capacidad del parkingSchedule
-        parking_schedule = validated_data.get('parkingSchedule')
-        parking_schedule.actualCapacity -= 1
-        parking_schedule.save()
 
         return reservation
