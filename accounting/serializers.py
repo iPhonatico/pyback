@@ -26,13 +26,15 @@ class VehicleSerializer(serializers.ModelSerializer):
 class ReservationSerializer(serializers.ModelSerializer):
     vehicle = VehicleSerializer(required=False)
     automatic = serializers.BooleanField(required=False, default=False)
-    parking = ParkingSerializer(read_only=True)  # Relación con el modelo Parking
+    parking = ParkingSerializer(read_only=True)  # Para mostrar la información completa del parqueadero
+    parking_id = serializers.PrimaryKeyRelatedField(queryset=Parking.objects.all(), source='parking',
+                                                    write_only=True)  # Para manejar el ID del parqueadero en las solicitudes POST/PUT
     schedule_time = serializers.SerializerMethodField()  # Para mostrar la fecha y la hora del horario
     user = serializers.SerializerMethodField()  # Para mostrar la información del usuario
 
     class Meta:
         model = Reservation
-        fields = ['id', 'payAmount', 'state', 'parking', 'vehicle', 'parkingSchedule', 'automatic', 'schedule_time', 'user']
+        fields = ['id', 'payAmount', 'state', 'parking', 'parking_id', 'vehicle', 'parkingSchedule', 'automatic', 'schedule_time', 'user']
 
     def get_schedule_time(self, obj):
         return {
