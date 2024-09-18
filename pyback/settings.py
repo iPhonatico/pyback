@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-12hn_s(*8)hs7zujepw2s#p_i^u^i^j21kok-a72haa&z0mh%l'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -113,12 +114,12 @@ DATABASES = {
     #     'NAME': BASE_DIR / 'db.sqlite3',
     # }
     'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'database-ecupark',
-            'USER': 'admin',
-            'PASSWORD': '001122Park',
-            'HOST': 'database-ecupark-prueba.cpiokocgy0m9.us-east-1.rds.amazonaws.com',
-            'PORT': '3306',
+            'ENGINE': config('SECRET_DB_ENGINE'),
+            'NAME': config('SECRET_DB_NAME'),
+            'USER': config('SECRET_DB_USER'),
+            'PASSWORD': config('SECRET_DB_PASS'),
+            'HOST': config('SECRET_DB_URL'),
+            'PORT': config('SECRET_DB_PORT'),
         }
 }
 

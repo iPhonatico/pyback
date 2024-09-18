@@ -7,3 +7,4 @@ django-cors-headers
 gunicorn
 pymysql
 django-cors-headers
+python-decouple
